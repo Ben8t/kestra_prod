@@ -1,0 +1,16 @@
+id: trigger_flows
+namespace: demo
+
+tasks:
+
+  - id: taskA
+    type: io.kestra.core.tasks.debugs.Return
+    format: "{{task.id}} - Flow A"
+
+  - id: flowB
+    type: io.kestra.core.tasks.flows.Flow
+    namespace: demo
+    flowId: trigger_flows_sub
+    inputs:
+      data: "{{ outputs.taskA.value }}"
+

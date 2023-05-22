@@ -1,0 +1,16 @@
+id: input_file
+namespace: demo
+
+inputs:
+  - name: text_file
+    type: FILE
+
+tasks:
+
+  - id: read_file
+    type: io.kestra.core.tasks.scripts.Bash
+    inputFiles:
+      file.txt: "{{ inputs.text_file }}"
+    commands:
+      - "cat file.txt"
+

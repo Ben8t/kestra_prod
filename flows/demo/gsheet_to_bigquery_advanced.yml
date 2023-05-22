@@ -1,0 +1,34 @@
+id: gsheet_to_bigquery_advanced
+namespace: demo
+tasks:
+
+  - id: process_parallel
+    type: io.kestra.core.tasks.flows.EachParallel
+    value:
+      - '{"id": "1ybRy9G-sGznXI9GM6FEb0duQyByJbgq4LoYd7oYFr5c", "name": "feature"}'
+      - '{"id": "1MMqkOZkZg9M6gZlaHbBbjqadlFt1PosW18fiCIiNeVE", "name": "stream"}'
+    tasks:
+      - id: seq
+        type: io.kestra.core.tasks.flows.Sequential
+        tasks:
+          - id: read_gsheet
+            type: io.kestra.plugin.googleworkspace.sheets.Read
+            description: Read data from Google Spreadsheet
+            spreadsheetId: "{{ json(parents[0].taskrun.value).id }}"
+            store: true
+            valueRender: FORMATTED_VALUE
+          
+          - id: write_csv
+            type: io.kestra.plugin.serdes.csv.CsvWriter
+            description: Write CSV into Kestra internal storage
+            from: "{{ outputs.read_gsheet[parents[0].taskrun.value].uris.Sheet }}"
+          
+          - id: load_biqquery
+            type: io.kestra.plugin.gcp.bigquery.Load
+            description: Load data into BigQuery
+            autodetect: true
+            csvOptions:
+              fieldDelimiter: ","
+            destinationTable: kestra-dev.bpimpaud.spotify_{{ json(parents[0].taskrun.value).name }}
+            format: CSV
+            from: "{{ outputs.write_csv[parents[0].taskrun.value].uri }}"

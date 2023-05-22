@@ -1,0 +1,128 @@
+id: scrape_ebay
+namespace: scraping
+description: Flow to scrape any Ebay webpage.
+
+inputs:
+  - name: makes
+    type: JSON
+    defaults: '["Aston Martin", "Ferrari", "Mercedes"]'
+
+tasks:
+
+  - id: process_in_parallel
+    type: io.kestra.core.tasks.flows.EachParallel
+    value: '{{ inputs.makes }}'
+    tasks:
+      - id: seq
+        type: io.kestra.core.tasks.flows.Sequential
+        tasks:
+
+          - id: format_string
+            type: io.kestra.core.tasks.debugs.Return
+            format: "{{ parents[0].taskrun.value | replace({' ': ''})}}"
+
+          - id: build_url
+            type: io.kestra.core.tasks.debugs.Return
+            format: 'https://www.ebay.com/sch/i.html?_sacat=6001&{{outputs.format_string[parents[0].taskrun.value].value}}val=&_nkw={{outputs.format_string[parents[0].taskrun.value].value}}&_sop=10&_ipg=60'
+
+          - id: download_url
+            type: io.kestra.plugin.fs.http.Download
+            uri: '{{ outputs.build_url[parents[0].taskrun.value].value }}'
+
+          - id: parse_search_result
+            type: io.kestra.core.tasks.scripts.Python
+            description: Parse all links from the Ebay page search result.
+            inputFiles:
+              content.html: "{{outputs.download_url[parents[0].taskrun.value].uri}}"
+              main.py: |
+                from kestra import Kestra
+                from bs4 import BeautifulSoup as bs
+
+                with open("content.html", "r") as fopen:
+                  html = fopen.read()
+
+                soup = bs(html, "lxml")
+
+                title = soup.title.get_text()
+                links = []
+                for ad in soup.find_all("div", class_="s-item__wrapper clearfix"):
+                  href = ad.find_all("a")[0].get("href")
+                  if href:
+                    links.append(href)
+
+                Kestra.outputs({'title': title, 'links': links})
+          
+          - id: parse_content
+            description: Parse each Ebay ad to retrieve interesting data.
+            type: io.kestra.core.tasks.scripts.Python
+            outputFiles:
+              - data
+            inputFiles:
+              main.py: |
+                from kestra import Kestra
+                from bs4 import BeautifulSoup as bs
+                import pandas as pd
+                import requests
+
+                data = []
+                for link in {{ outputs.parse_search_result[parents[0].taskrun.value].vars.links }}:
+                  informations = {}
+                  response = requests.get(link)
+                  if response.status_code == 200:
+                    html = response.text
+                    soup = bs(html, "lxml")
+                    print(link)
+                    title = soup.find_all("h1", class_="x-item-title__mainTitle")
+                    if title:
+                      title = title[0].get_text()
+                    else:
+                      title = "None"
+                    
+                    price = soup.find_all("span", attrs={"itemprop" : "price"})
+
+                    img = soup.find_all("img")[1]["src"]
+                    if price:
+                      price = price[0]["content"]
+                    else:
+                      price = "None"
+
+                    informations["link"] = link
+                    informations["title"] = title
+                    informations["price"] = price
+                    informations["img"] = img
+                    labels = soup.find_all("div", class_="ux-labels-values__labels")
+                    values = soup.find_all("div", class_="ux-labels-values__values")
+                    for label, value in zip(labels, values):
+                        label_text = f'_{label.get_text().lower().replace("(","").replace(")","").replace(" ", "_").replace(":","")}'.strip()
+                        value_text = value.get_text()
+                        informations[f"{label_text}"] = value_text
+                    
+                    data.append(informations)
+
+                # Export data to Parquet and a parsing date column
+  
+                (
+                  pd.DataFrame(data).
+                  assign(parsing_date='{{ taskrun.startDate | date("YYYY-MM-dd") }}').
+                  to_json("{{ outputFiles.data }}", orient="records", lines=True)
+                )
+
+  - id: concat
+    type: io.kestra.core.tasks.storages.Concat
+    files: '{{ outputs.parse_content | jq(".[].outputFiles.data") }}'
+
+triggers:
+  - id: every_day
+    type: io.kestra.core.models.triggers.types.Schedule
+    cron: 0 12 * * *
+
+taskDefaults:
+  - type: io.kestra.core.tasks.scripts.Python
+    values:
+      virtualEnv: false
+      commands:
+        - python main.py
+      runner: DOCKER
+      dockerOptions:
+        image: custom_python
+        pullImage: false

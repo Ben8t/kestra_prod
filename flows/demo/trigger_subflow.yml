@@ -1,0 +1,12 @@
+id: trigger_flows_sub
+namespace: demo
+
+inputs:
+  - name: data
+    type: STRING
+
+tasks:
+
+  - id: fromFlowA
+    type: io.kestra.core.tasks.debugs.Return
+    format: "{{ inputs.data }}"
