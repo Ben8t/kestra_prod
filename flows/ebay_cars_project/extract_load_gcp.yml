@@ -32,7 +32,7 @@ triggers:
     conditions:
       - type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
         namespace: scraping
-        flowId: scrape-ebay
+        flowId: scrape_ebay
       - type: io.kestra.core.models.conditions.types.ExecutionStatusCondition
         in:
           - SUCCESS
