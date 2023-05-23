@@ -80,7 +80,11 @@ tasks:
                     
                     price = soup.find_all("span", attrs={"itemprop" : "price"})
 
-                    img = soup.find_all("img")[1]["src"]
+                    img = soup.find_all("img")
+                    if img and len(img) > 1:
+                      img = img[1]["src"]
+                    else:
+                      img = "None"
                     if price:
                       price = price[0]["content"]
                     else:
@@ -93,7 +97,7 @@ tasks:
                     labels = soup.find_all("div", class_="ux-labels-values__labels")
                     values = soup.find_all("div", class_="ux-labels-values__values")
                     for label, value in zip(labels, values):
-                        label_text = f'_{label.get_text().lower().replace("(","").replace(")","").replace(" ", "_").replace(":","")}'.strip()
+                        label_text = f'_{label.get_text().lower().replace("(","").replace(")","").replace(" ", "_").replace(":","").replace("/","_")}'.strip()
                         value_text = value.get_text()
                         informations[f"{label_text}"] = value_text
                     
@@ -114,6 +118,8 @@ tasks:
 triggers:
   - id: every_day
     type: io.kestra.core.models.triggers.types.Schedule
+    inputs:
+      make: '["Aston Martin", "Ferrari", "Mercedes"]'
     cron: 0 12 * * *
 
 taskDefaults:
