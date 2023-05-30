@@ -1,0 +1,35 @@
+id: flow_c
+namespace: blueprint
+description: |
+  **Trigger a flow when two parents have suceeded**
+  This flow is triggered when `flow_a` and `flow_b` are successful.
+
+labels:
+  tag: KESTRA CORE
+
+tasks:
+  - id: task_c
+    type: io.kestra.core.tasks.debugs.Return
+    format: "{{task.id}}"
+
+triggers:
+  - id: multiple-listen-flow
+    type: io.kestra.core.models.triggers.types.Flow
+    conditions:
+      - id: multiple
+        type: io.kestra.core.models.conditions.types.MultipleCondition
+        window: P1D
+        windowAdvance: P0D
+        conditions:
+          success:
+            type: io.kestra.core.models.conditions.types.ExecutionStatusCondition
+            in:
+              - SUCCESS
+          flow_a:
+            type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
+            namespace: blueprint
+            flowId: flow_a
+          flow_b:
+            type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
+            namespace: blueprint
+            flowId: flow_b
