@@ -1,0 +1,17 @@
+id: read_postgres
+namespace: blueprint
+description: |
+  **Read from Postgres**
+  > Note: You can get a sample postgres with loaded dataset at https://hub.docker.com/r/aa8y/postgres-dataset/
+
+labels:
+  tag: DATABASE
+
+tasks:
+  - id: read
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: jdbc:postgresql://sample_postgres:5433/world
+    username: postgres
+    password: postgres
+    sql: SELECT * FROM country LIMIT 10
+    fetch: true

@@ -1,0 +1,15 @@
+id: subflow
+namespace: blueprint
+
+labels:
+  tag: SCHEDULE & TRIGGER
+
+inputs:
+  - name: data
+    type: STRING
+
+tasks:
+
+  - id: fromFlowA
+    type: io.kestra.core.tasks.debugs.Return
+    format: "{{ inputs.data }}"

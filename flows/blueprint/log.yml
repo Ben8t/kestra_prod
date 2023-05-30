@@ -1,0 +1,12 @@
+id: log
+namespace: blueprint
+description: |
+  **Log content in the console**
+
+labels:
+  tag: KESTRA CORE
+
+tasks:
+  - id: log
+    type: io.kestra.core.tasks.log.Log
+    message: Hello world!
