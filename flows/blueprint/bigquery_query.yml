@@ -3,6 +3,8 @@ namespace: blueprint
 description: |
   **Query in BigQuery**
   Perform a BigQuery Query and write a CSV out of the results
+labels:
+  tag: CLOUD
 
 tasks:
   - id: query
