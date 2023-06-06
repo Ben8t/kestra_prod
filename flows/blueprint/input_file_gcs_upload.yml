@@ -1,0 +1,22 @@
+id: input_file_upload_gcs
+namespace: blueprint
+description: |
+  **Read a file from inputs and upload it to GCS**
+
+labels: 
+  tag: KESTRA CORE
+
+inputs:
+  - name: file
+    type: FILE
+
+  - name: rename
+    type: STRING
+
+tasks:
+
+  - id: upload
+    type: io.kestra.plugin.gcp.gcs.Upload
+    from: "{{ inputs.file }}"
+    to: "gs://bpimpaud-demo/{{ inputs.rename }}"
+
