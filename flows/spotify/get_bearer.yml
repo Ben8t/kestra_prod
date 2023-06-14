@@ -1,0 +1,28 @@
+id: get_bearer
+namespace: spotify
+
+variables:
+  client_id: '{{ envs.spotify_client_id }}'
+  client_secret: '{{ envs.spotify_client_secret }}'
+
+tasks:
+
+  - id: build_temp_token
+    type: io.kestra.core.tasks.debugs.Return
+    format: "{{ vars.client_id }}:{{ vars.client_secret }}"
+
+  - id: get_bearer
+    type: io.kestra.plugin.fs.http.Request
+    uri: https://accounts.spotify.com/api/token
+    method: POST
+    headers:
+      Authorization: "Basic {{ outputs.build_temp_token.value | base64encode }}"
+    contentType: "application/x-www-form-urlencoded"
+    formData: 
+      grant_type: 'client_credentials'
+
+  - id: bearer
+    type: io.kestra.core.tasks.debugs.Return
+    format: "{{ json(outputs.get_bearer.body).access_token }}"
+
+  
