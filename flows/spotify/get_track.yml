@@ -1,0 +1,70 @@
+id: get_tracks
+namespace: spotify
+
+inputs:
+  - name: url
+    type: STRING
+    defaults: https://api.spotify.com/v1/me/tracks
+
+tasks:
+
+  - id: get_bearer
+    type: io.kestra.core.tasks.flows.Flow
+    namespace: spotify
+    flowId: get_bearer
+    outputs:
+      bearer: '{{ outputs.bearer.value }}'
+    wait: true
+  
+  - id: tracks
+    type: io.kestra.core.tasks.scripts.Python
+    outputFiles:
+      - data.json
+    inputFiles:
+      main.py: |
+        import requests
+        import json
+        from kestra import Kestra
+
+        url = "{{ inputs.url }}"
+
+        has_next_key = False
+        results = []
+        headers = {'Authorization': f"Bearer {{ outputs.get_bearer.outputs.bearer }}"}
+        response = requests.get(url, headers=headers)
+        if response.status_code != 200:
+            raise Exception(f"Requests failed : {response.content}")
+
+        if "next" in response.json().keys():
+            has_next_key = True
+
+        while has_next_key:
+            data = response.json().get("items")
+            results.append(data)
+            if response.json().get("next"):
+                url = response.json().get("next")
+                response = requests.get(url, headers=headers)
+                print(f"Parsed {url}")
+            else:
+                has_next_key = False
+
+        with open("{{ outputFiles['data.json']}}", "w+") as fopen:
+          for item in [item for sublist in results for item in sublist]:
+            json.dump(item, fopen)
+            fopen.write("\n")
+        
+  - id: load
+    type: io.kestra.plugin.gcp.gcs.Upload
+    from: "{{ outputs.tracks.outputFiles['data.json']}}"
+    to: "gs://bpimpaud-demo/spotify/data.json"
+
+taskDefaults:
+  - type: io.kestra.core.tasks.scripts.Python
+    values:
+      commands:
+        - python main.py
+      dockerOptions:
+        image: custom_python
+        pullImage: false
+      runner: DOCKER
+      virtualEnv: false

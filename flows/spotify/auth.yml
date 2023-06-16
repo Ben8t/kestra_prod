@@ -1,0 +1,20 @@
+id: auth
+namespace: spotify
+
+inputs:
+  - name: code
+    type: STRING
+
+tasks:
+
+  - id: get_auth_token
+    type: io.kestra.plugin.fs.http.Request
+    uri: https://accounts.spotify.com/api/token
+    method: POST
+    headers:
+      Authorization: "Basic {{ envs.spotify_client_id ~ ':' ~ envs.spotify_client_secret | base64encode }}"
+    contentType: "application/x-www-form-urlencoded"
+    formData:
+      code: '{{ inputs.code }}'
+      grant_type: 'authorization_code'
+      redirect_uri: 'http://localhost:8888/callback'
