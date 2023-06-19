@@ -1,0 +1,48 @@
+id: dbt
+namespace: demo
+
+tasks:
+
+  - id: working_dir
+    type: io.kestra.core.tasks.flows.WorkingDirectory
+    tasks:
+
+      - id: clone
+        type: io.kestra.plugin.git.Clone
+        url: https://github.com/Ben8t/kestra_dbt
+        branch: main
+
+      - id: dbt-run
+        type: io.kestra.plugin.dbt.cli.Run
+        runner: DOCKER
+        dbtPath: /usr/local/bin/dbt
+        dockerOptions:
+          image: ghcr.io/kestra-io/dbt-bigquery:latest
+        inputFiles:
+          .profile/profiles.yml: |
+            kestra_dbt:
+              outputs:
+                dev:
+                  type: bigquery
+                  dataset: demo_converteo
+                  fixed_retries: 1
+                  location: EU
+                  method: service-account
+                  keyfile: sa.json
+                  priority: interactive
+                  project: kestra-dev
+                  threads: 8
+                  timeout_seconds: 300
+              target: dev
+          sa.json: |
+            {{ envs.gcp_creds }}
+triggers:
+  - id: trigger
+    type: io.kestra.core.models.triggers.types.Flow
+    conditions:
+      - type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
+        namespace: demo
+        flowId: airbyte
+      - type: io.kestra.core.models.conditions.types.ExecutionStatusCondition
+        in:
+          - SUCCESS
