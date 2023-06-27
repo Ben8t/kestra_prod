@@ -1,6 +1,9 @@
 id: airbyte
 namespace: demo
 
+labels:
+  tag: converteo
+
 tasks:
 
   - id: sync_airbyte_parallel
@@ -23,3 +26,10 @@ taskDefaults:
       username: "{{ envs.airbyte_username }}"
       password: "{{ envs.airbyte_password }}"
       wait: true
+
+# triggers:
+#   - id: schedule
+#     type: io.kestra.core.models.triggers.types.Schedule
+#     cron: "*/15 * * * *"
+#     backfill:
+#       start: 2020-06-25T14:00:00Z

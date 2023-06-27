@@ -1,6 +1,9 @@
 id: gcs_trigger_cloud_run
 namespace: demo
 
+labels:
+  tag: converteo
+
 tasks:
 
   - id: slack

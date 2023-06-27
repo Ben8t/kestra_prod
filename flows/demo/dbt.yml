@@ -1,6 +1,9 @@
 id: dbt
 namespace: demo
 
+labels:
+  tag: converteo
+
 tasks:
 
   - id: working_dir
