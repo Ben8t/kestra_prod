@@ -8,7 +8,9 @@ terraform {
 }
 
 provider "kestra" {
-  url = "http://localhost:8080"
+  url = "http://localhost:8089"
+  username = "admin"
+  password = "kestra"
 }
 
 resource "kestra_flow" "flows" {

@@ -1,9 +1,6 @@
 id: airbyte
 namespace: demo
 
-labels:
-  tag: converteo
-
 tasks:
 
   - id: sync_airbyte_parallel

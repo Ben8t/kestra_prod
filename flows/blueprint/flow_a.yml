@@ -6,3 +6,7 @@ tasks:
     type: io.kestra.core.tasks.debugs.Return
     format: "{{task.id}}"
 
+  - id: task_b
+    type: io.kestra.core.tasks.log.Log
+    message: hello
+

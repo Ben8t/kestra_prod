@@ -1,0 +1,21 @@
+id: python_script
+namespace: demo
+tasks:
+  - id: working_dir
+    type: io.kestra.core.tasks.flows.WorkingDirectory
+    tasks:
+      - id: python
+        type: io.kestra.plugin.scripts.python.Script
+        docker:
+          image: ghcr.io/kestra-io/pydata:latest
+        warningOnStdErr: false
+        script: |
+          import pandas as pd
+          data = [{"col_a": 1, "col_b": 2}, {"col_a": 3, "col_b": 4}]
+          df = pd.DataFrame(data)
+          df.to_csv("data.csv", index=False)
+
+      - id: output
+        type: io.kestra.core.tasks.storages.LocalFiles
+        outputs:
+          - data.csv

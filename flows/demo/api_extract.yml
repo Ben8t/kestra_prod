@@ -1,9 +1,6 @@
 id: api_extract
 namespace: demo
 
-labels:
-  tag: converteo
-
 tasks:
 
   - id: extract_api
@@ -12,7 +9,7 @@ tasks:
 
   - id: load
     type: io.kestra.plugin.gcp.bigquery.Load
-    from: "{{ outputs.extract.uri }}"
+    from: "{{ outputs.extract_api.uri }}"
     destinationTable: "kestra-dev.demo_converteo.covid_data"
     autodetect: true
     format: CSV
