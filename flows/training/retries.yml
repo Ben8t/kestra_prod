@@ -1,0 +1,33 @@
+id: retries
+namespace: training
+
+tasks:
+  - id: some_retry
+    type: io.kestra.core.tasks.scripts.Bash
+    commands:
+      - 'if [ "{{taskrun.attemptsCount}}" -eq 4 ]; then exit 0; else exit 1; fi'
+    retry:
+      type: constant
+      interval: PT0.25S
+      maxAttempt: 3
+      maxDuration: PT1M
+      warningOnRetry: false
+
+  - id: fail_allowed
+    type: io.kestra.core.tasks.flows.AllowFailure
+    tasks:
+      - id: task1
+        type: io.kestra.core.tasks.log.Log
+        message: "It works"
+
+      - id: task2
+        type: io.kestra.plugin.fs.ftp.Upload
+        host: "some_host_that_doesnt_exist"
+
+  - id: failing
+    type: io.kestra.core.tasks.executions.Fail
+
+errors:
+  - id: fallback
+    type: io.kestra.core.tasks.log.Log
+    message: Fallback !
