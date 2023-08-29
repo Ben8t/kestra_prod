@@ -5,14 +5,28 @@ tasks:
   - id: download_file
     type: io.kestra.plugin.fs.http.Download
     uri: https://raw.githubusercontent.com/kestra-io/datasets/main/csv/salaries.csv
-
-  - id: upload_s3
-    type: io.kestra.plugin.aws.s3.Upload
-    accessKeyId: '{{ secret("AWS_KEY")}}'
-    secretKeyId: '{{ secret("AWS_SECRET") }}'
-    region: 'eu-north-1'
-    from: '{{ outputs.download_file.uri }}'
-    bucket: 'kestra-training'
-    key: 'training/metrics.csv'
-    # https://aws.amazon.com/s3/pricing/
   
+
+  - id: parallel
+    type: io.kestra.core.tasks.flows.Parallel
+    tasks:
+      - id: upload_s3
+        type: io.kestra.plugin.aws.s3.Upload
+        accessKeyId: '{{ secret("AWS_KEY")}}'
+        secretKeyId: '{{ secret("AWS_SECRET") }}'
+        region: 'eu-north-1'
+        from: '{{ outputs.download_file.uri }}'
+        bucket: 'kestra-training'
+        key: 'training/metrics.csv'
+        # https://aws.amazon.com/s3/pricing/
+        
+      - id: load_bq
+        type: io.kestra.plugin.gcp.bigquery.Load
+        autodetect: true
+        destinationTable: "kestra-dev.training.metrics"
+        format: CSV
+        csvOptions:
+          fieldDelimiter: ","
+        from: "{{ outputs.download_file.uri }}"
+        projectId: kestra-dev
+        serviceAccount: "{{ secret('gcp_creds') }}"
