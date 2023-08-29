@@ -1,0 +1,72 @@
+id: malloy_cli_test
+namespace: dev.malloy
+
+tasks:
+
+  - id: wd
+    type: io.kestra.core.tasks.flows.WorkingDirectory
+    tasks:
+      - id: local_file
+        type: io.kestra.core.tasks.storages.LocalFiles
+        inputs:
+          model.malloy: |
+            source: match is table('duckdb:/tmp/data/matchs_*.csv')
+            run: match -> {
+              project: *
+            }
+
+            source: fixtures is table('duckdb:/tmp/data/fixtures_premier_league*.csv') extend {
+              dimension:
+                  score_home is substr(score, 1, 1)
+                  score_away is substr(score, 3, 1)
+              measure:
+                  avg_attendance is AVG(attendance::number)
+                  avg_score_home is AVG(score_home::number)
+                  avg_score_away is AVG(score_away::number)
+            }
+          query.malloysql: |
+            >>>malloy
+            import "model.malloy"
+
+            >>>sql connection:duckdb
+
+            copy %\{
+              match -> {
+                project: *
+              }
+            \}%  to '/tmp/data/result_from_malloy.csv' (FORMAT 'csv');
+
+
+            copy %\{
+              fixtures -> {
+                group_by:
+                    referee
+                aggregate:
+                    avg_score_home
+                    avg_score_away
+                nest: by_home_team is -> {
+                    group_by:
+                        home
+                    aggregate:
+                        nb_game is count()
+                }
+              }
+            \}%  to '/tmp/data/referee_analysis.csv' (FORMAT 'csv');
+      - id: run_malloy
+        type: io.kestra.plugin.scripts.node.Commands
+        warningOnStdErr: false
+        docker:
+          image: node_duckdb_malloy
+          pullPolicy: NEVER
+          volumes:
+            - /Users/benoit/dev/kestra/kestra_prod/data:/tmp/data
+        commands:
+          #- malloy-cli run model.malloy -j
+          - malloy-cli run query.malloysql
+          - ls /tmp/data
+
+      - id: outputfile
+        type: io.kestra.core.tasks.storages.LocalFiles
+        outputs:
+          - /tmp/data/result_from_malloy.csv
+
