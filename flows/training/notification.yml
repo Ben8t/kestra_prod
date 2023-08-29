@@ -1,0 +1,12 @@
+id: notification
+namespace: training
+
+tasks:
+  - id: slack_message
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK')}}"
+    payload: |
+      {
+        "channel": "U052JMPLBM3",
+        "text": "This is a message from your favorite Slackbot !"
+      }

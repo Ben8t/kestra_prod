@@ -1,0 +1,21 @@
+id: notification_monitoring
+namespace: training
+
+tasks:
+  - id: send
+    type: io.kestra.plugin.notifications.slack.SlackExecution
+    url: "{{ secret('SLACK_WEBHOOK') }}"
+    channel: "U052JMPLBM3"
+    executionId: "{{trigger.executionId}}"
+
+triggers:
+  - id: listen
+    type: io.kestra.core.models.triggers.types.Flow
+    conditions:
+      - type: io.kestra.core.models.conditions.types.ExecutionStatusCondition
+        in:
+          - FAILED
+          - WARNING
+      - type: io.kestra.core.models.conditions.types.ExecutionNamespaceCondition
+        namespace: training
+        prefix: true
