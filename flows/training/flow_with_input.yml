@@ -1,0 +1,11 @@
+id: flow_with_input
+namespace: training
+
+inputs:
+  - name: name
+    type: STRING
+
+tasks:
+  - id: say_hello
+    type: io.kestra.core.tasks.log.Log
+    message: "Hello 👋, my name is {{ inputs.name }}"

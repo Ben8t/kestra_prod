@@ -1,0 +1,15 @@
+id: subflow
+namespace: training
+
+tasks:
+
+  - id: return
+    type: io.kestra.core.tasks.debugs.Return
+    format: "John"
+
+  - id: run_subflow
+    type: io.kestra.core.tasks.flows.Flow
+    flowId: flow_with_input
+    namespace: training
+    inputs:
+      name: '{{ outputs.return.value }}'

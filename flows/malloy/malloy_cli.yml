@@ -27,7 +27,7 @@ tasks:
 
             >>>sql connection:duckdb
 
-            copy %{
+            copy %\{
               matchs -> {
                   nest: by_home_team is -> {
                       group_by:
@@ -42,7 +42,7 @@ tasks:
                           diff is avg_score_away - avg_xg_away
                   }
               }
-            }%  to 'xg_analysis_malloy.json' (FORMAT 'json');
+            \}%  to 'xg_analysis_malloy.json' (FORMAT 'json');
       
       - id: run_malloy
         type: io.kestra.plugin.malloy.CLI
