@@ -1,0 +1,11 @@
+id: webhook
+namespace: training
+tasks:
+  - id: hello
+    type: io.kestra.core.tasks.log.Log
+    message: Kestra team wishes you a great day! 👋
+
+triggers:
+  - id: webhook_trigger
+    type: io.kestra.core.models.triggers.types.Webhook
+    key: '{{ secret("MY_SECRET")}}'
