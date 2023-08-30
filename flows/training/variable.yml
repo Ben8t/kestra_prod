@@ -1,0 +1,16 @@
+id: variable
+namespace: training
+
+variables:
+  project: kestra-dev
+
+tasks:
+  - id: query
+    type: io.kestra.plugin.gcp.bigquery.Query
+    sql: |
+      SELECT
+        job_title, AVG(salary) AS avg_salary
+      FROM
+        {{ vars.project }}.training.metrics
+      GROUP BY
+        job_title
