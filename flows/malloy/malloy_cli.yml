@@ -10,19 +10,16 @@ tasks:
         type: io.kestra.core.tasks.storages.LocalFiles
         inputs:
           model.malloy: |
-            source: match is table('duckdb:/tmp/data/matchs_*.csv')
-            run: match -> {
-              project: *
-            }
-
-            source: fixtures is table('duckdb:/tmp/data/fixtures_premier_league*.csv') extend {
+            source: matchs is table("duckdb:/tmp/data/match*.csv") extend {
               dimension:
-                  score_home is substr(score, 1, 1)
-                  score_away is substr(score, 3, 1)
+                score_home is substr(score, 0, strpos(score, "–"))
+                score_away is substr(score, strpos(score, "–")+1, 3)
               measure:
                   avg_attendance is AVG(attendance::number)
                   avg_score_home is AVG(score_home::number)
                   avg_score_away is AVG(score_away::number)
+                  avg_xg_home is AVG(x_g)
+                  avg_xg_away is AVG(x_g_1)
             }
           query.malloysql: |
             >>>malloy
@@ -30,43 +27,35 @@ tasks:
 
             >>>sql connection:duckdb
 
-            copy %\{
-              match -> {
-                project: *
+            copy %{
+              matchs -> {
+                  nest: by_home_team is -> {
+                      group_by:
+                          home
+                      aggregate:
+                          diff is avg_score_home - avg_xg_home
+                  }
+                  nest: by_away_team is -> {
+                      group_by:
+                          away
+                      aggregate:
+                          diff is avg_score_away - avg_xg_away
+                  }
               }
-            \}%  to '/tmp/data/result_from_malloy.csv' (FORMAT 'csv');
-
-
-            copy %\{
-              fixtures -> {
-                group_by:
-                    referee
-                aggregate:
-                    avg_score_home
-                    avg_score_away
-                nest: by_home_team is -> {
-                    group_by:
-                        home
-                    aggregate:
-                        nb_game is count()
-                }
-              }
-            \}%  to '/tmp/data/referee_analysis.csv' (FORMAT 'csv');
+            }%  to 'xg_analysis_malloy.json' (FORMAT 'json');
+      
       - id: run_malloy
-        type: io.kestra.plugin.scripts.node.Commands
+        type: io.kestra.plugin.malloy.CLI
         warningOnStdErr: false
         docker:
-          image: node_duckdb_malloy
+          image: ghcr.io/kestra-io/malloy
           pullPolicy: NEVER
           volumes:
             - /Users/benoit/dev/kestra/kestra_prod/data:/tmp/data
         commands:
-          #- malloy-cli run model.malloy -j
           - malloy-cli run query.malloysql
-          - ls /tmp/data
 
-      - id: outputfile
+      - id: output_file
         type: io.kestra.core.tasks.storages.LocalFiles
         outputs:
-          - /tmp/data/result_from_malloy.csv
-
+          - xg_analysis_malloy.json
