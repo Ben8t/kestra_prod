@@ -1,0 +1,19 @@
+id: if
+namespace: training
+inputs:
+  - name: string
+    type: STRING
+tasks:
+
+  - id: if
+    type: io.kestra.core.tasks.flows.If
+    condition: "{{ inputs.string == 'John'}} "
+    then:
+      - id: when-true
+        type: io.kestra.core.tasks.log.Log
+        message: "This is John reaching out"
+      
+    else:
+      - id: when-false
+        type: io.kestra.core.tasks.log.Log
+        message: "This someone unknown"
