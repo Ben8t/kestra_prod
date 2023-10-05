@@ -1,0 +1,31 @@
+id: trigger_by_ftp
+namespace: training
+tasks:
+  - id: ftp_list
+    type: io.kestra.plugin.fs.ftp.List
+    host: host.docker.internal
+    port: "21"
+    username: one
+    password: "1234"
+    from: "./output"
+
+  - id: upload_s3
+    type: io.kestra.plugin.aws.s3.Upload
+    accessKeyId: '{{ secret("AWS_KEY")}}'
+    secretKeyId: '{{ secret("AWS_SECRET") }}'
+    region: 'eu-north-1'
+    from: '{{ trigger.files[0].path }}'
+    bucket: 'kestra-training'
+    key: 'training/from_ftp_data.csv'
+
+triggers:
+  - id: trigger-ftp
+    type: io.kestra.plugin.fs.ftp.Trigger
+    host: host.docker.internal
+    port: "21"
+    username: one
+    password: "1234"
+    from: "./input/"
+    interval: PT1S
+    action: MOVE
+    moveDirectory: "./output/"
