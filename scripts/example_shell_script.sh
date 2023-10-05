@@ -1,8 +1,11 @@
-#!/bin/bash
+#!/bin/sh
 
-for (( counter=10; counter>0; counter-- ))
+counter=10
+
+while [ $counter -gt 0 ]
 do
     echo -n "$counter "
+    counter=$((counter - 1))
 done
 
 printf "\n"
