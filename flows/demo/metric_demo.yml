@@ -1,5 +1,5 @@
 id: metric_demo
-namespace: demo
+namespace: demo.kestra
 
 tasks:
   - id: process

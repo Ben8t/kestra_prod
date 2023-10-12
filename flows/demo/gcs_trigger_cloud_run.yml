@@ -1,5 +1,5 @@
 id: gcs_trigger_cloud_run
-namespace: demo
+namespace: demo.kestra
 
 tasks:
 

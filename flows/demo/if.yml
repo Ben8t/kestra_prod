@@ -1,5 +1,5 @@
 id: if
-namespace: training
+namespace: demo.kestra
 inputs:
   - name: string
     type: STRING

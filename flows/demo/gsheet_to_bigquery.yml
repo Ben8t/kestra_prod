@@ -1,5 +1,5 @@
 id: gsheet_to_bigquery
-namespace: demo
+namespace: demo.kestra
 
 tasks:
   

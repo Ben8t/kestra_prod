@@ -1,5 +1,5 @@
 id: kafka_azure_log_processing
-namespace: demo
+namespace: demo.kestra
 description: Consume Kafka logs and process with Azure Cloud
 tasks:
 

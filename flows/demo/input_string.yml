@@ -1,5 +1,5 @@
-id: flow_with_input
-namespace: training
+id: input_string
+namespace: demo.kestra
 
 inputs:
   - name: name

@@ -1,5 +1,5 @@
 id: variable
-namespace: training
+namespace: demo.kestra
 
 variables:
   project: kestra-dev

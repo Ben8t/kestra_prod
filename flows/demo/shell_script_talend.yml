@@ -1,0 +1,41 @@
+id: shell_script
+namespace: demo.kestra
+tasks:
+  
+  - id: simple_inline_shell_script
+    type: io.kestra.plugin.scripts.shell.Script
+    script: |
+      echo "The current execution is : {{ execution.id }}"
+
+
+  - id: work_dir
+    type: io.kestra.core.tasks.flows.WorkingDirectory
+    tasks:
+
+      - id: clone
+        type: io.kestra.plugin.git.Clone
+        url: https://github.com/Ben8t/kestra_prod
+
+      - id: script
+        type: io.kestra.plugin.scripts.shell.Commands
+        runner: PROCESS
+        commands:
+          - /bin/sh ./scripts/example_shell_script.sh
+
+
+  - id: metaServlet
+    type: io.kestra.plugin.fs.http.Request
+    description: |
+      https://help.talend.com/r/fr-FR/7.3/administration-center-user-guide/non-gui-operation-in-metaservlet
+      https://edwardost.github.io/talend/di/2015/05/28/Using-the-TAC-API
+    
+    uri: http://localhost:8080/org.talend.administrator/metaServlet
+    method: GET
+    allowFailed: true
+    formData:
+      actionName: "runTask"
+      authPass: "TAC_Admin_password"
+      authUser: "TAC_Admin_username"
+      taskId: 55
+      mode: "synchronous"
+      context: '{"firstname": "Robert", "lastname": "Durst"}'

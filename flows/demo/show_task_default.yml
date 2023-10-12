@@ -1,5 +1,5 @@
 id: show_task_default
-namespace: training
+namespace: demo.kestra
 
 tasks:
 

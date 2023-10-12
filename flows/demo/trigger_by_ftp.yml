@@ -1,5 +1,5 @@
 id: trigger_by_ftp
-namespace: training
+namespace: demo.kestra
 tasks:
   - id: ftp_list
     type: io.kestra.plugin.fs.ftp.List

@@ -1,5 +1,5 @@
-id: metrics
-namespace: training
+id: metrics_bigquery
+namespace: demo.kestra
 
 tasks:
   - id: download_file

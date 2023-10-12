@@ -1,5 +1,5 @@
 id: hello_world
-namespace: demo
+namespace: demo.kestra
 description: This flow logs a message to the console.
 
 tasks:

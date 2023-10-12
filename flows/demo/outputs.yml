@@ -1,5 +1,5 @@
 id: outputs
-namespace: training
+namespace: demo.kestra
 
 tasks:
   - id: download_file

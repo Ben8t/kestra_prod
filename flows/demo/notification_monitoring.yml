@@ -1,5 +1,5 @@
 id: notification_monitoring
-namespace: training
+namespace: demo.kestra
 
 tasks:
   - id: send

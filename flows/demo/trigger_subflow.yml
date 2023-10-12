@@ -1,5 +1,5 @@
 id: trigger_flows_sub
-namespace: demo
+namespace: demo.kestra
 
 inputs:
   - name: data

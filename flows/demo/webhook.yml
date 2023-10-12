@@ -1,5 +1,5 @@
 id: webhook
-namespace: training
+namespace: demo.kestra
 tasks:
   - id: hello
     type: io.kestra.core.tasks.log.Log

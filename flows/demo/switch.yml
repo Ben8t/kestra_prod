@@ -1,10 +1,5 @@
 id: switch
-namespace: blueprint
-description: |
- **Switch tasks depending on a specific value**
-
-labels:
-  tag: KESTRA CORE
+namespace: demo.kestra
 
 inputs:
   - name: string
@@ -17,11 +12,11 @@ tasks:
     value: "{{ inputs.string }}"
     cases:
       A:
-        - id: a
+        - id: A
           type: io.kestra.core.tasks.debugs.Return
           format: "The input is {{ inputs.string }}"
       B:
-        - id: b
+        - id: B
           type: io.kestra.core.tasks.debugs.Return
           format: "The input is {{ inputs.string }}"
     defaults:

@@ -1,5 +1,5 @@
 id: flow_c
-namespace: blueprint
+namespace: demo.kestra
 description: |
   **Trigger a flow when two parents have suceeded**
   This flow is triggered when `flow_a` and `flow_b` are successful.
@@ -27,9 +27,9 @@ triggers:
               - SUCCESS
           flow_a:
             type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
-            namespace: blueprint
-            flowId: flow_a
+            namespace: demo.kestra
+            flowId: flow_upstream_a
           flow_b:
             type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
-            namespace: blueprint
-            flowId: flow_b
+            namespace: demo.kestra
+            flowId: flow_upstream_b

@@ -1,5 +1,5 @@
 id: subflow
-namespace: training
+namespace: demo.kestra
 
 tasks:
 

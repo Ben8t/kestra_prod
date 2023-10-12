@@ -1,5 +1,5 @@
 id: retries
-namespace: training
+namespace: demo.kestra
 
 tasks:
   - id: some_retry
@@ -22,6 +22,7 @@ tasks:
 
       - id: task2
         type: io.kestra.plugin.fs.ftp.Upload
+        from: "ergr"
         host: "some_host_that_doesnt_exist"
 
   - id: failing

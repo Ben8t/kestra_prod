@@ -1,8 +1,0 @@
-id: flow_b
-namespace: blueprint
-
-tasks:
-  - id: task_b
-    type: io.kestra.core.tasks.debugs.Return
-    format: "{{task.id}}"
-

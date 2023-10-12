@@ -1,5 +1,5 @@
 id: duckdb_demo
-namespace: demo
+namespace: demo.kestra
 description: Analyse data salaries.
 
 tasks:

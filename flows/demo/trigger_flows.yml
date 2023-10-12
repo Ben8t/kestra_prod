@@ -1,5 +1,5 @@
 id: trigger_flows
-namespace: demo
+namespace: demo.kestra
 
 tasks:
 
