@@ -45,3 +45,6 @@ docker-compose.yml
 
 .terraform.lock.hcl
 gcp_service_account/*
+archive/*
+logs/*
+data/*
