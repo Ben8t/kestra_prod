@@ -1,5 +1,9 @@
 id: python_script
 namespace: demo.kestra
+
+labels:
+  tag: SCRIPT
+
 tasks:
   - id: working_dir
     type: io.kestra.core.tasks.flows.WorkingDirectory

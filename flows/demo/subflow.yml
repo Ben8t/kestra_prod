@@ -10,6 +10,6 @@ tasks:
   - id: run_subflow
     type: io.kestra.core.tasks.flows.Flow
     flowId: flow_with_input
-    namespace: training
+    namespace: demo.kestra
     inputs:
       name: '{{ outputs.return.value }}'

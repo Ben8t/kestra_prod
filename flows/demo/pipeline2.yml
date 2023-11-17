@@ -1,0 +1,13 @@
+id: pipeline2
+namespace: demo.kestra.script.project_b
+tasks:
+  - id: hello
+    type: io.kestra.core.tasks.log.Log
+    message: Kestra team wishes you a great day! 👋
+
+  - id: python
+    type: io.kestra.plugin.scripts.python.Commands
+    namespaceFiles:
+      enabled: true
+    commands:
+      - python src/main.py

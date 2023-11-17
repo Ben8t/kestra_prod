@@ -1,0 +1,35 @@
+id: exercice_duckdb_notification
+namespace: training.exercice
+
+tasks:
+
+  - id: download
+    type: io.kestra.plugin.fs.http.Download
+    uri: https://raw.githubusercontent.com/kestra-io/datasets/main/csv/salaries.csv
+
+  - id: query
+    type: io.kestra.plugin.jdbc.duckdb.Query
+    inputFiles:
+      data.csv: "{{ outputs.download.uri }}"
+    sql: |
+      SELECT 
+        job_title,
+        salary
+      FROM (
+        SELECT 
+          job_title,
+          salary,
+          MAX(salary) OVER () AS max_salary
+        FROM read_csv_auto('{{workingDir}}/data.csv', header=True)
+      ) AS subquery
+      WHERE salary = max_salary;
+    fetch: true
+
+  - id: slack_message
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK')}}"
+    payload: |
+      {
+        "channel": "U052JMPLBM3",
+        "text": "{{ outputs.query.rows[0].job_title }} makes {{ outputs.query.rows[0].salary }} a year"
+      }

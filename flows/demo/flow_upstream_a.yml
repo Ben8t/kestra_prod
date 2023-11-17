@@ -1,5 +1,8 @@
 id: flow_upstream_a
 namespace: demo.kestra
+
+labels:
+  tag: KESTRA CORE
 tasks:
   - id: hello
     type: io.kestra.core.tasks.log.Log

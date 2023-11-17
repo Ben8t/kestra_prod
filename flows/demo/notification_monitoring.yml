@@ -1,6 +1,9 @@
 id: notification_monitoring
 namespace: demo.kestra
 
+labels:
+  tag: ALERTING
+
 tasks:
   - id: send
     type: io.kestra.plugin.notifications.slack.SlackExecution
@@ -17,5 +20,5 @@ triggers:
           - FAILED
           - WARNING
       - type: io.kestra.core.models.conditions.types.ExecutionNamespaceCondition
-        namespace: training
+        namespace: demo.kestra
         prefix: true

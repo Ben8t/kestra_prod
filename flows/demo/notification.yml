@@ -1,6 +1,9 @@
 id: notification
 namespace: demo.kestra
 
+labels:
+  tag: ALERTING
+
 tasks:
 
   - id: download_file
