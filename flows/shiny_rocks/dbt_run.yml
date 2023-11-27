@@ -1,0 +1,74 @@
+id: dbt_run
+namespace: shiny_rocks.product
+description: |
+  Whenever all data are loaded in BigQuery, this flow will run a dbt job to transform data.
+
+labels:
+  tag: analytics
+
+tasks:
+  - id: workingdir
+    type: io.kestra.core.tasks.flows.WorkingDirectory
+    tasks:
+      - id: cloneRepository
+        type: io.kestra.plugin.git.Clone
+        url: https://github.com/Ben8t/shiny_rocks
+        branch: main
+
+      - id: profile
+        type: io.kestra.core.tasks.storages.LocalFiles
+        inputs:          
+          profiles.yml: |
+            shiny_rocks_dbt:
+              outputs:
+                dev:
+                  type: bigquery
+                  dataset: shiny_rocks
+                  fixed_retries: 1
+                  keyfile: service_account.json
+                  location: EU
+                  method: service-account
+                  priority: interactive
+                  project: kestra-dev
+                  threads: 8
+                  timeout_seconds: 300
+              target: dev
+          service_account.json: "{{ secret('gcp_creds') }}"
+
+
+      - id: dbt
+        type: io.kestra.plugin.scripts.shell.Commands
+        docker:
+          image: ghcr.io/kestra-io/dbt-bigquery:latest
+        commands:
+          - dbt run --profiles-dir=. --project-dir=shiny_rocks_dbt
+
+triggers:
+  - id: multiple-listen-flow
+    type: io.kestra.core.models.triggers.types.Flow
+    conditions:
+      - type: io.kestra.core.models.conditions.types.ExecutionStatusCondition
+        in:
+          - SUCCESS
+      - id: multiple
+        type: io.kestra.core.models.conditions.types.MultipleCondition
+        window: P1D
+        windowAdvance: P0D
+        conditions:
+          orders:
+            type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
+            namespace: shiny_rocks.product
+            flowId: load_orders_bigquery
+          payments:
+            type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
+            namespace: shiny_rocks.product
+            flowId: load_payments_bigquery
+          services:
+            type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
+            namespace: shiny_rocks.product
+            flowId: load_services_bigquery
+          marketing_investments:
+            type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
+            namespace: shiny_rocks.marketing
+            flowId: marketing_investments_to_bigquery
+          
