@@ -10,4 +10,4 @@ tasks:
     namespaceFiles:
       enabled: true
     commands:
-      - python src/main.py
+      - python scripts/project_b/main.py
