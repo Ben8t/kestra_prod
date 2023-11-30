@@ -2,7 +2,7 @@ terraform {
   required_providers {
     kestra = {
       source  = "kestra-io/kestra" # namespace of Kestra provider
-      version = "~> 0.7.0"         # version of Kestra Terraform provider, not the version of Kestra
+      version = "~> 0.13.0"         # version of Kestra Terraform provider, not the version of Kestra
     }
   }
 }
@@ -19,4 +19,17 @@ resource "kestra_flow" "flows" {
   namespace = yamldecode(templatefile(each.value, {}))["namespace"]
   content   = templatefile(each.value, {})
   keep_original_source = true
+}
+
+resource "kestra_namespace_file" "test_script" {
+  namespace = "demo.kestra.script"
+  filename  = "/src/test.py"
+  content   = file("scripts/test.py")
+}
+
+resource "kestra_namespace_file" "scripts_project_b" {
+  for_each = fileset(path.module, "scripts/project_b/**/*.py")
+  namespace = "demo.kestra.script.project_b"
+  filename = "/${each.value}"
+  content = file(each.value)
 }
