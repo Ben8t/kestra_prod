@@ -1,0 +1,21 @@
+id: s3_to_python
+namespace: demo.kestra
+
+tasks:
+
+  - id: download
+    type: io.kestra.plugin.aws.s3.Download
+    accessKeyId: "{{ secret('AWS_KEY') }}"
+    secretKeyId: "{{ secret('AWS_SECRET') }}"
+    region: eu-north-1
+    bucket: kestra-training
+    key: some_data.csv
+
+  - id: python
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: ghcr.io/kestra-io/pydata:latest
+    script: |
+      import pandas as pd
+      data = pd.read_csv("{{ outputs.download.uri}}")
+      print(data)
