@@ -21,6 +21,7 @@ resource "kestra_flow" "flows" {
   keep_original_source = true
 }
 
+
 resource "kestra_namespace_file" "test_script" {
   namespace = "demo.kestra.script"
   filename  = "/src/test.py"
