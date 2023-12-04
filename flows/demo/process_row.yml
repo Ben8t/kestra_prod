@@ -1,0 +1,17 @@
+id: process_row
+namespace: demo.kestra.foreach
+
+inputs:
+  - name: rows
+    type: STRING
+
+tasks:
+  - id: read_file
+    type: io.kestra.plugin.scripts.shell.Commands
+    runner: PROCESS
+    commands:
+      - cat "{{ inputs.rows }}"
+
+  - id: read_file_content
+    type: io.kestra.core.tasks.log.Log
+    message: "{{ read(inputs.rows) }}"
