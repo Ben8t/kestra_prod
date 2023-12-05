@@ -34,3 +34,10 @@ resource "kestra_namespace_file" "scripts_project_b" {
   filename = "/${each.value}"
   content = file(each.value)
 }
+
+resource "kestra_namespace_file" "shiny_rocks" {
+  for_each = fileset(path.module, "scripts/shiny_rocks/**/*")
+  namespace = "shiny_rocks.sales"
+  filename = "/${each.value}"
+  content = file(each.value)
+}
