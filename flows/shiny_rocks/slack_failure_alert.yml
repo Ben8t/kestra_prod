@@ -23,5 +23,5 @@ triggers:
           - FAILED
           - WARNING
       - type: io.kestra.core.models.conditions.types.ExecutionNamespaceCondition
-        namespace: shiny_rocks
+        namespace: shiny_rocks.disable  # just disable the listening for getting clean dependencies
         prefix: true
