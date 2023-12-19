@@ -9,7 +9,7 @@ tasks:
 
   - id: flowB
     type: io.kestra.core.tasks.flows.Flow
-    namespace: demo
+    namespace: demo.kestra
     flowId: trigger_flows_sub
     inputs:
       data: "{{ outputs.taskA.value }}"
