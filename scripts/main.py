@@ -1,0 +1,1 @@
+print("Test in existing scripts folder")
