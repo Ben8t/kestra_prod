@@ -1,0 +1,19 @@
+id: pebble-date-trigger
+namespace: demo.kestra.pebble
+tasks:
+
+  - id: return_date
+    type: io.kestra.core.tasks.debugs.Return
+    format: '{{ trigger.date ?? execution.startDate }}'
+
+  - id: format_date
+    type: io.kestra.core.tasks.log.Log
+    message: '{{ outputs.return_date.value | date("yyyy-MM-dd")}}'
+
+  - id: direct
+    type: io.kestra.core.tasks.log.Log
+    message: '{{ trigger.date ?? execution.startDate | date("yyyy-MM-dd") }}'
+triggers:
+  - id: schedule
+    type: io.kestra.core.models.triggers.types.Schedule
+    cron: "* 14 * * *"

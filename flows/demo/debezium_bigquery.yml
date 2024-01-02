@@ -1,0 +1,86 @@
+id: listen-debezium
+namespace: demo.kestra
+tasks:
+
+  - id: slack_notificaiton
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK') }}"
+    payload: |
+      {
+        "channel": "U052JMPLBM3",
+        "text": "{{ trigger.size }} new rows have been added to the database"
+      }
+
+  - id: json
+    type: io.kestra.plugin.serdes.json.JsonWriter
+    from: "{{ trigger.uris['postgres.order'] }}"
+
+  - id: parallel
+    type: io.kestra.core.tasks.flows.Parallel
+    tasks:
+      - id: load_bq
+        type: io.kestra.plugin.gcp.bigquery.Load
+        from: '{{ outputs.json.uri }}'
+        serviceAccount: '{{ secret("GCP_CREDS") }}'
+        projectId: kestra-dev
+        destinationTable: bpimpaud.data_from_db
+        format: JSON
+        writeDisposition: WRITE_APPEND
+        schema:
+          fields:
+            - name: order_id
+              type: NUMERIC
+            - name: amount
+              type: NUMERIC
+
+      - id: postgres_process
+        type: io.kestra.core.tasks.flows.Sequential
+        tasks:
+          - id: python
+            docker:
+              image: ghcr.io/kestra-io/pydata:latest
+            type: io.kestra.plugin.scripts.python.Script
+            outputFiles:
+              - data.json
+            script: |
+              import json
+              from kestra import Kestra
+              data = []
+              with open("{{ outputs.json.uri }}", "r") as fopen:
+                  for line in fopen:
+                      json_data = json.loads(line)
+                      json_data.update({"time": "{{ now() | date("yyyy-MM-dd") }}"})
+                      data.append(json_data)
+
+              with open("data.json", "w+") as fopen:
+                json.dump(data[0], fopen)
+
+          - id: write_csv
+            type: io.kestra.plugin.serdes.csv.CsvWriter
+            from: "{{ outputs.python.outputFiles['data.json'] }}"
+
+          - id: pg_ingest
+            type: io.kestra.plugin.jdbc.postgresql.CopyIn
+            url: jdbc:postgresql://host.docker.internal:5433/
+            username: postgres
+            password: example
+            format: CSV
+            from: "{{ outputs.write_csv.uri }}"
+            table: new_table
+            header: true
+
+
+triggers:
+  - id: listen-debezium
+    type: io.kestra.plugin.debezium.postgres.Trigger
+    hostname: host.docker.internal
+    port: "5433"
+    username: postgres
+    password: example
+    database: postgres
+    pluginName: DECODERBUFS
+    snapshotMode: INITIAL
+    format: INLINE
+    interval: PT1S
+    metadata: DROP
+    deleted: DROP
