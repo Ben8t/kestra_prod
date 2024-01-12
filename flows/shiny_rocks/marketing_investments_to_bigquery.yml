@@ -6,6 +6,8 @@ description: |
 labels:
   tag: marketing
 
+disabled: true
+
 variables:
   spreadsheet_id: 1C0UWuMuiEIxkOKzSQhbhFn6AILzmXX59NUbtI4s3wpU
   dataset_table: shiny_rocks.marketing_investments

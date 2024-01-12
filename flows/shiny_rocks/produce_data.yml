@@ -4,6 +4,8 @@ description: |
   This flow generate Shiny Rocks fictional data. Three datasets are created: `orders`, `payments` and `services`.
   Like in reality, those data change everyday.
 
+disabled: true
+
 labels:
   tag: producer
 
