@@ -1,0 +1,51 @@
+id: process_pdf
+namespace: fraud_detection
+
+tasks:
+
+  - id: parse_tika
+    type: io.kestra.plugin.tika.Parse
+    from: "{{ trigger.objects[0].uri }}"
+    ocrOptions:
+      strategy: NO_OCR
+    store: true
+
+  - id: process
+    type: io.kestra.plugin.scripts.python.Script
+    warningOnStdErr: false
+    docker:
+      image: ghcr.io/kestra-io/pydata:latest
+    beforeCommands:
+      - pip install beautifulsoup4
+    script: |
+      from kestra import Kestra
+      from bs4 import BeautifulSoup
+
+      def clean_string(text):
+        return text.strip().replace("\\xe9", "e").replace("\\xb0", "")
+
+      with open("{{ outputs.parse_tika.uri }}", "r") as fopen:
+        data = fopen.read()
+      
+      soup = BeautifulSoup(data)
+      li_tags = soup.find_all('li')
+      result = {}
+      for li in li_tags:
+        value = li.get_text(strip=True)
+        splitted_value = value.split(":")
+        result[clean_string(splitted_value[0]).replace(" ", "_")] = clean_string(splitted_value[1])
+
+      Kestra.outputs(result)
+
+triggers:
+  - id: listen-s3
+    type: io.kestra.plugin.aws.s3.Trigger
+    accessKeyId: "{{ secret('AWS_KEY') }}"
+    secretKeyId: "{{ secret('AWS_SECRET') }}"
+    region: eu-north-1
+    bucket: "kestra-demo"
+    prefix: "fraud_detection/to_process/"
+    action: MOVE
+    interval: PT1S
+    moveTo:
+      key: "fraud_detection/archive/"

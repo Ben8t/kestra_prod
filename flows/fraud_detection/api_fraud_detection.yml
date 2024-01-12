@@ -1,0 +1,39 @@
+id: api_fraud_detection
+namespace: fraud_detection
+
+inputs:
+  - name: data
+    type: JSON
+  
+tasks:
+
+  - id: api_call
+    type: io.kestra.plugin.fs.http.Request
+    uri: 'http://host.docker.internal:8082/is_fraud/?id_number={{ json(inputs.data)["n_immatriculation"] }}&name={{ json(inputs.data)["prenom"] }}&lastname={{ json(inputs.data)["nom"] }}&address={{ json(inputs.data)["adresse1"] | urlencode}}'
+    method: "GET"
+    contentType: "application/json"
+
+  - id: handling_strategy
+    type: io.kestra.core.tasks.flows.Flow
+    namespace: fraud_detection
+    flowId: fraud_strategy
+    inputs:
+      is_fraud: '{{ json(outputs.api_call.body).is_fraud }}'
+      name: '{{ json(inputs.data)["prenom"] }}'
+      lastname: '{{ json(inputs.data)["nom"] }}'
+      address: '{{ json(inputs.data)["adresse1"] }}'
+      id_number: '{{ json(inputs.data)["n_immatriculation"] }}'
+
+triggers:
+  - id: listen
+    type: io.kestra.core.models.triggers.types.Flow
+    inputs:
+      data: "{{ outputs.process.vars }}"
+    conditions:
+      - type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
+        namespace: fraud_detection
+        flowId: process_pdf
+      - type: io.kestra.core.models.conditions.types.ExecutionStatusCondition
+        in:
+          - SUCCESS
+          - WARNING

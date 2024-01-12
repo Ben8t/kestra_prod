@@ -1,0 +1,49 @@
+id: fraud_strategy
+namespace: fraud_detection
+
+inputs:
+  - name: is_fraud
+    type: BOOLEAN
+
+  - name: name
+    type: STRING
+
+  - name: lastname
+    type: STRING
+
+  - name: address
+    type: STRING
+
+  - name: id_number
+    type: STRING
+
+
+tasks:
+  
+  - id: if
+    type: io.kestra.core.tasks.flows.If
+    condition: "{{ inputs.is_fraud}}"
+    then:
+      - id: slack_notification
+        type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+        url: "{{ secret('SLACK_WEBHOOK') }}"
+        payload: |
+          {
+            "channel": "U052JMPLBM3",
+            "text": "Fraud has been detected for {{inputs.name}} {{inputs.lastname}} ({{ inputs.address }}) - {{inputs.id_number}}"
+          }
+
+    else:
+
+      - id: insert_db
+        type: io.kestra.plugin.aws.dynamodb.PutItem
+        secretKeyId: "{{ secret('AWS_SECRET') }}"
+        accessKeyId: "{{ secret('AWS_KEY') }}"
+        region: eu-north-1
+        tableName: fraud_db
+        item:
+          name: "{{ inputs.name }}"
+          lastname: "{{ inputs.lastname }}"
+          id_number: "{{ inputs.id_number }}"
+          address: "{{ inputs.address }}"
+
