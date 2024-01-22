@@ -1,0 +1,27 @@
+id: for-each-item-subflow
+namespace: dev
+
+inputs:
+  - name: items
+    type: STRING
+
+tasks:
+  - id: per-item-1
+    type: io.kestra.core.tasks.log.Log
+    message: "{{ inputs.items }}"
+
+  - id: per-item-2
+    type: io.kestra.core.tasks.log.Log
+    message: "{{ inputs.items }}"
+
+  - id: per-item-3
+    type: io.kestra.core.tasks.log.Log
+    message: "{{ inputs.items }}"
+
+  - id: per-item-4
+    type: io.kestra.core.tasks.log.Log
+    message: "{{ inputs.items }}"
+
+  - id: per-item-5
+    type: io.kestra.core.tasks.log.Log
+    message: "{{ inputs.items }}"

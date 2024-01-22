@@ -1,0 +1,18 @@
+id: my_subflow
+namespace: dev
+
+inputs:
+  - name: data
+    type: INT
+tasks:
+
+  - id: log
+    type: io.kestra.core.tasks.debugs.Return
+    format: "{{ inputs.data }}"
+  
+  - id: task1
+    type: io.kestra.plugin.scripts.shell.Commands
+    commands:
+      - touch test.txt
+    outputFiles:
+      - test.txt
