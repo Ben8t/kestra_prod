@@ -10,10 +10,11 @@ tasks:
     type: "io.kestra.plugin.git.Push"
     flows:
       enabled: true
+      gitDirectory: flows
     namespaceFiles:
       enabled: true
     branch: test-git-ops # mandatory, we'll create the branch if not exists
     url: https://github.com/Ben8t/kestra_prod
     username: Ben8t
-    password: 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
+    password: '{{ secret("GITHUB") }}'
     commitMessage: "test" # required
