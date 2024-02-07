@@ -1,0 +1,15 @@
+id: git-sync
+namespace: integration
+tasks:
+
+  - id: git-sync
+    type: io.kestra.plugin.git.Sync
+    url: https://github.com/Ben8t/kestra_prod
+    branch: test-git-ops
+    username: Ben8t
+    password: "{{ secret('GITHUB') }}"
+    
+triggers:
+  - id: every_minute
+    type: io.kestra.core.models.triggers.types.Schedule
+    cron: "*/1 * * * *"
