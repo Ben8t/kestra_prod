@@ -9,7 +9,7 @@ terraform {
 
 provider "kestra" {
   url = "http://localhost:8089"
-  username = "admin"
+  username = "benoit@kestra.io"
   password = "kestra"
 }
 

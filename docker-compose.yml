@@ -33,6 +33,7 @@ services:
       - kestra-data:/app/storage
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/kestra-wd:/tmp/kestra-wd
+      # - ./plugin/test/plugins:/app/plugins
     environment:
       KESTRA_CONFIGURATION: |
         datasources:
@@ -56,7 +57,7 @@ services:
           server:
             basic-auth:
               enabled: true
-              username: admin
+              username: benoit@kestra.io
               password: kestra
           tasks:
             scripts:
