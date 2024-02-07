@@ -7,7 +7,6 @@ tasks:
     url: https://github.com/Ben8t/kestra_prod
     branch: test-git-ops
     username: Ben8t
-    gitDirectory: ./_flows/main_namespace
     namespaceFilesDirectory: ns_script
     password: "{{ secret('GITHUB') }}"
     
