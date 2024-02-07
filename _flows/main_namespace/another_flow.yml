@@ -1,4 +1,4 @@
-id: test
+id: another_flow
 namespace: integration.sub_namespace
 
 tasks:
