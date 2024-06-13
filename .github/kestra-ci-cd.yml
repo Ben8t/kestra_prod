@@ -1,0 +1,25 @@
+name: Kestra CI/CD
+on: [push]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    name: Kestra validate
+    steps:
+      - name: Validate all flows on server-side
+        uses: actions/kestra-validate-action@develop
+        with:
+          directory: ./test-flow
+
+  # If validation passed, deploy resources
+  deploy:
+    runs-on: ubuntu-latest
+    name: Kestra deploy
+    steps:
+      # We can only deploy to one namespace at once,
+      # so we have two different steps for our two namespaces product and engineering
+      - name: Deploy product flows
+        uses: actions/kestra-deploy-action@develop
+        with:
+          namespace: test
+          directory: ./test-flow
+          server: https://1b70-2001-861-3204-f1c0-f510-b3-6d5a-7ece.ngrok-free.app

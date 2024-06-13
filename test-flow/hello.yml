@@ -1,0 +1,8 @@
+id: hello_world
+namespace: test
+description: This flow logs a message to the console.
+
+tasks:
+  - id: hello
+    type: io.kestra.core.tasks.log.Log
+    message: Hello world!
