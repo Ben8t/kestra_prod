@@ -12,7 +12,7 @@ jobs:
         uses: kestra-io/validate-action@develop
         with:
           resource: flow
-          directory: ./test-flow/
+          directory: test-flow
 
   # If validation passed, deploy resources
   deploy:
