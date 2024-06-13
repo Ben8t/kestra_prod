@@ -12,7 +12,7 @@ jobs:
         uses: kestra-io/validate-action@develop
         with:
           resource: flow
-          directory: ./test-flow
+          directory: ./test-flow/
 
   # If validation passed, deploy resources
   deploy:
@@ -26,5 +26,5 @@ jobs:
         with:
           resource: flow
           namespace: test
-          directory: ./test-flow
+          directory: ./test-flow/
           server: https://1b70-2001-861-3204-f1c0-f510-b3-6d5a-7ece.ngrok-free.app
