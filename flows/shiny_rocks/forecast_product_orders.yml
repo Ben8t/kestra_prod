@@ -6,69 +6,84 @@ description: |
   Then for each product, we compute forecast in Python thanks to the [Prophet library](https://facebook.github.io/prophet) and we plot predictions with R and its famous ggplot library.
 
 labels:
-  tag: product
+  tag: sales
 
 tasks:
   
   - id: query_data
     type: io.kestra.plugin.gcp.bigquery.Query
-    serviceAccount: '{{ secret("gcp_creds") }}'
     projectId: kestra-dev
-    sql: '{{ read("scripts/shiny_rocks/query/get_data.sql") }}'
+    serviceAccount: "{{ secret('GCP_CREDS') }}"
+    sql: "{{ render(read('scripts/sales/query/get_data.sql')) }}"
     store: true 
   
   - id: write_csv
     type: io.kestra.plugin.serdes.csv.CsvWriter
     from: '{{ outputs.query_data.uri }}'
-
+    
   - id: get_product_id
-    type: io.kestra.plugin.scripts.python.Commands
+    type: io.kestra.plugin.scripts.python.Script
     description: We use a python script to extract the distinct unique values of product_id.
     warningOnStdErr: false
     docker:
         image: ghcr.io/kestra-io/pydata
     inputFiles:
       data.csv: '{{ outputs.write_csv.uri }}'
-    namespaceFiles:
-      enabled: true
-    commands:
-      - python scripts/shiny_rocks/scripts/get_product_id.py
+    script: |
+      import pandas as pd
+      from kestra import Kestra
+
+      data = pd.read_csv("data.csv")
+      product_id = [int(x) for x in list(data.product_id.unique())]
+      print(product_id)
+      Kestra.outputs({"product_id": product_id})
+
 
   - id: parallel_forecast
     type: io.kestra.core.tasks.flows.EachParallel
     description: For each product_id value, we run a forecast to predict the number of orders for the next 5 days.
     value: '{{ outputs.get_product_id.vars.product_id }}'
     tasks:
-      - id: working_dir_forecast
-        type: io.kestra.core.tasks.flows.WorkingDirectory
-        namespaceFiles:
-          enabled: true
+
+      - id: sequential
+        type: io.kestra.core.tasks.flows.Sequential
         tasks:
-          - id: get_data
-            type: io.kestra.core.tasks.storages.LocalFiles
-            inputs:
-              data.csv: '{{ outputs.write_csv.uri }}'
 
-          
-          - id: forecast
-            type: io.kestra.plugin.scripts.python.Commands
-            warningOnStdErr: false
-            docker:
-                image: ghcr.io/kestra-io/pydata
-            beforeCommands: 
-              - pip install prophet
-            commands:
-              - python scripts/shiny_rocks/scripts/forecast.py --product_id {{ taskrun.value }}
+          - id: working_dir_forecast
+            type: io.kestra.core.tasks.flows.WorkingDirectory
+            tasks:
+              
+              - id: forecast
+                type: io.kestra.plugin.scripts.python.Script
+                warningOnStdErr: false
+                docker:
+                    image: ghcr.io/kestra-io/pydata
+                inputFiles:
+                  data.csv: '{{ outputs.write_csv.uri }}'
+                beforeCommands: 
+                  - pip install prophet
+                script: "{{ render(read('scripts/sales/src/forecast.py')) }}"
+                
 
-          - id: rscript
-            type: io.kestra.plugin.scripts.r.Commands
-            warningOnStdErr: false
-            docker:
-              image: ghcr.io/kestra-io/rdata
-            commands:
-              - Rscript scripts/shiny_rocks/scripts/plot.R
-            outputFiles:
-              - plot.png
+              - id: rscript
+                type: io.kestra.plugin.scripts.r.Script
+                warningOnStdErr: false
+                docker:
+                  image: ghcr.io/kestra-io/rdata
+                script: |
+                  library(ggplot2)
+                  library(readr)
+                  library(dplyr)
+
+                  historic = read_csv("historic.csv") %>% mutate(group="historic", yhat=y)
+                  forecast = read_csv("forecast.csv") %>% mutate(group="forecast")
+                  data = bind_rows(historic, forecast)
+
+                  plot = ggplot(data=data, aes(x=ds, y=yhat, color=group)) +
+                  geom_line() +
+                  geom_point()
+                  
+                  ggsave("{{outputDir}}/plot.png")
                   
                   
 triggers:

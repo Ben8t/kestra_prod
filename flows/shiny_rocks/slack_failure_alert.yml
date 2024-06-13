@@ -1,5 +1,5 @@
 id: slack_failure_alert
-namespace: shiny_rocks.alerting
+namespace: shiny_rocks
 description: |
   This flow send a Slack notificiation whenever a flow execution in the `shiny_rocks` namespace end up in FAILED or WARNING state.
 
@@ -23,5 +23,5 @@ triggers:
           - FAILED
           - WARNING
       - type: io.kestra.core.models.conditions.types.ExecutionNamespaceCondition
-        namespace: shiny_rocks.disable  # just disable the listening for getting clean dependencies
+        namespace: shiny_rocks
         prefix: true

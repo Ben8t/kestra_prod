@@ -1,0 +1,39 @@
+id: process_data
+namespace: demo.mailinblack
+
+tasks:
+
+  - id: download
+    type: io.kestra.plugin.aws.s3.Download
+    accessKeyId: "{{ secret('AWS_KEY') }}"
+    secretKeyId: "{{ secret('AWS_SECRET') }}"
+    region: eu-north-1
+    bucket: kestra-training
+    key: some_data.csv
+
+  - id: python
+    type: io.kestra.plugin.scripts.python.Script
+    warningOnStdErr: false
+    docker:
+      image: ghcr.io/kestra-io/pydata:latest
+    outputFiles:
+      - output_data.csv
+    script: |
+      import pandas as pd
+      data = pd.read_csv("{{ outputs.download.uri}}")
+      data.to_csv("output_data.csv", index=False)
+
+  - id: upload
+    type: io.kestra.plugin.aws.s3.Upload
+    accessKeyId: "{{ secret('AWS_KEY') }}"
+    secretKeyId: "{{ secret('AWS_SECRET') }}"
+    region: eu-north-1
+    bucket: kestra-training
+    key: "processed_data.csv"
+    from: "{{ outputs.python.outputFiles['output_data.csv'] }}"
+
+
+triggers:
+  - id: schedule
+    type: io.kestra.core.models.triggers.types.Schedule
+    cron: "0 0 1 * *"

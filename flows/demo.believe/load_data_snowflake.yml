@@ -1,0 +1,39 @@
+id: load_data_snowflake
+namespace: demo.believe.royalties
+
+inputs:
+  - name: data_path
+    type: STRING
+
+tasks:
+
+  - id: download_data
+    type: io.kestra.plugin.aws.s3.Download
+    accessKeyId: '{{ secret("AWS_KEY")}}'
+    secretKeyId: '{{ secret("AWS_SECRET") }}'
+    region: 'eu-north-1'
+    bucket: '{{ inputs.data_path | split("/", 2) | jq(".[0]") | first }}'
+    key: '{{ inputs.data_path | split("/", 2) | jq(".[1]") | first }}'
+    
+  - id: load_snowflake
+    type: io.kestra.core.tasks.flows.Flow
+    namespace: demo.believe.royalties
+    flowId: subflow_load_snowflake
+    inputs:
+      table: TOPCHART
+      database: KESTRA_DEMO
+      data: "{{ outputs.download_data.uri }}"
+
+triggers:
+
+  - id: listen_ingestion
+    type: io.kestra.core.models.triggers.types.Flow
+    inputs:
+      data_path: "{{ outputs.processed_data_path.value }}"
+    conditions:
+      - type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
+        namespace: demo.believe.royalties
+        flowId: ingest_data_from_ftp
+      - type: io.kestra.core.models.conditions.types.ExecutionStatusCondition
+        in:
+          - SUCCESS

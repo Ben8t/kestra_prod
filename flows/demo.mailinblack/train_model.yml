@@ -1,0 +1,62 @@
+id: train_model
+namespace: demo.mailinblack
+
+inputs:
+  - name: data
+    type: FILE
+
+tasks:
+
+  - id: upload_data_databrick
+    type: io.kestra.plugin.databricks.dbfs.Upload
+    authentication:
+      token: "{{ secret('DATABRICKS_TOKEN') }}"
+    host: "{{ secret('DATABRICKS_HOST') }}"
+    from: "{{ inputs.data }}"
+    to: /Share/processed_data.csv
+
+  - id: create_cluster
+    type: io.kestra.plugin.databricks.cluster.CreateCluster
+    authentication:
+      token: "{{ secret('DATABRICKS_TOKEN') }}"
+    host: "{{ secret('DATABRICKS_HOST') }}"
+    clusterName: kestra-demo
+    nodeTypeId: n2-highmem-4
+    numWorkers: 1
+    sparkVersion: 13.0.x-scala2.12
+
+  - id: allow_failure
+    type: io.kestra.core.tasks.flows.AllowFailure
+    tasks:
+      - id: run_job
+        type: io.kestra.plugin.databricks.job.CreateJob
+        authentication:
+          token: "{{ secret('DATABRICKS_TOKEN') }}"
+        host: "{{ secret('DATABRICKS_HOST') }}"
+        jobTasks:
+          - existingClusterId: "{{outputs.createCluster.clusterId}}"
+            taskKey: yourArbitraryTaskKey
+            sparkPythonTask:
+              pythonFile: /Shared/train_model.py
+              sparkPythonTaskSource: WORKSPACE
+        waitForCompletion: PT3S
+
+  - id: delete_cluster
+    type: io.kestra.plugin.databricks.cluster.DeleteCluster
+    authentication:
+      token: "{{ secret('DATABRICKS_TOKEN') }}"
+    host: "{{ secret('DATABRICKS_HOST') }}"
+    clusterId: "{{outputs.createCluster.clusterId}}"
+
+triggers:
+  - id: listen-workflow-1
+    type: io.kestra.core.models.triggers.types.Flow
+    inputs:
+      data: "{{ outputs.python.outputFiles['output_data.csv'] }}"
+    conditions:
+      - type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
+        namespace: demo.mailinblack
+        flowId: process_data
+      - type: io.kestra.core.models.conditions.types.ExecutionStatusCondition
+        in:
+          - SUCCESS

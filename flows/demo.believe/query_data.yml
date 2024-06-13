@@ -1,0 +1,36 @@
+id: query_data
+namespace: demo.believe.royalties
+tasks:
+
+  - id: query
+    type: io.kestra.plugin.jdbc.snowflake.Query
+    url: jdbc:snowflake://tsldcqi-pf95942.snowflakecomputing.com?warehouse=COMPUTE_WH
+    username: "{{ secret('SNOWFLAKE_USER') }}"
+    password: "{{ secret('SNOWFLAKE_PASSWORD') }}"
+    sql: |
+      SELECT * FROM KESTRA_DEMO.PUBLIC.TOPCHART WHERE streams >= 3
+    store: true
+
+  - id: write_csv
+    type: io.kestra.plugin.serdes.csv.CsvWriter
+    from: "{{ outputs.query.uri }}"
+
+  - id: python
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: ghcr.io/kestra-io/pydata:latest
+    script: |
+      import pandas as pd
+      data = pd.read_csv("{{ outputs.write_csv.uri }}")
+      print(data)
+
+triggers:
+  - id: listen_snowflake_load
+    type: io.kestra.core.models.triggers.types.Flow
+    conditions:
+      - type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
+        namespace: demo.believe.royalties
+        flowId: load_data_snowflake
+      - type: io.kestra.core.models.conditions.types.ExecutionStatusCondition
+        in:
+          - SUCCESS

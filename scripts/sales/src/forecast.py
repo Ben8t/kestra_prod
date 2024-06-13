@@ -1,16 +1,9 @@
-import argparse
 import pandas as pd
 from prophet import Prophet
 
-parser = argparse.ArgumentParser(description='Prophet forecasting script')
-parser.add_argument('--product_id', type=int, help='Product ID for forecasting')
-args = parser.parse_args()
-selected_product_id = args.product_id
-
-
 data = (
     pd.read_csv("data.csv")
-    .query(f"product_id == {selected_product_id}")
+    .query("product_id == {{ parents[0].taskrun.value }}")
     .rename(columns={"nb_order": "y", "order_date": "ds"})
     .sort_values(by="ds")
 )

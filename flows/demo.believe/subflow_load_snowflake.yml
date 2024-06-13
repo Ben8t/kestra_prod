@@ -1,0 +1,57 @@
+id: subflow_load_snowflake
+namespace: demo.believe.royalties
+
+labels:
+  - key: tag
+    value: subflow
+
+inputs:
+  - name: table
+    type: STRING
+
+  - name: database
+    type: STRING
+
+  - name: data
+    type: FILE
+
+tasks:
+  - id: create_table
+    type: io.kestra.plugin.jdbc.snowflake.Query
+    sql: |
+      CREATE TABLE IF NOT EXISTS {{ inputs.database }}.PUBLIC.{{inputs.table }} (
+        song STRING,
+        artist STRING,
+        streams NUMBER,
+        release_date STRING,
+        royalties NUMBER
+        );
+
+  - id: extract_internal_stage
+    type: io.kestra.plugin.jdbc.snowflake.Upload
+    from: "{{ inputs.data }}"
+    fileName: topChart.csv
+    prefix: processed
+    stageName: "@kestra_demo.public.%topChart"
+    compress: true
+
+  - id: load_table
+    type: io.kestra.plugin.jdbc.snowflake.Query
+    sql: |
+      COPY INTO {{ inputs.database }}.PUBLIC.{{inputs.table }}
+      FROM @kestra_demo.public.%topChart
+      FILE_FORMAT = (type = csv field_optionally_enclosed_by='"' skip_header = 1)
+      PATTERN = '.*topChart.csv.gz';
+
+taskDefaults:
+  - type: io.kestra.plugin.jdbc.snowflake.Query
+    values:
+      url: jdbc:snowflake://tsldcqi-pf95942.snowflakecomputing.com?warehouse=COMPUTE_WH
+      username: "{{ secret('SNOWFLAKE_USER') }}"
+      password: "{{ secret('SNOWFLAKE_PASSWORD') }}"
+
+  - type: io.kestra.plugin.jdbc.snowflake.Upload
+    values:
+      url: jdbc:snowflake://tsldcqi-pf95942.snowflakecomputing.com?warehouse=COMPUTE_WH
+      username: "{{ secret('SNOWFLAKE_USER') }}"
+      password: "{{ secret('SNOWFLAKE_PASSWORD') }}"

@@ -1,0 +1,37 @@
+id: mlflow_management
+namespace: demo.mailinblack
+
+tasks:
+
+  - id: mlflow_api
+    type: io.kestra.plugin.scripts.python.Commands
+    commands:
+      - python compare_model_performance.py
+
+  - id: if
+    type: io.kestra.core.tasks.flows.If
+    condition: "{{ outputs.mlflow_api.new_model > outputs.mlflow_api.prod_model}}"
+    then:
+      - id: azcli
+        type: io.kestra.plugin.azure.cli.AzCLI
+        username: "<appId>"
+        password: "{{secret('AZURE_SERVICE_PRINCIPAL_PASSWORD')}}"
+        tenant: "{{secret('AZURE_TENANT_ID')}}"
+        commands:
+          - az repos pr create
+    else:
+      - id: log
+        type: io.kestra.core.tasks.log.Log
+        message: "The new model is not better than the actual production model"
+
+
+triggers:
+  - id: listen-workflow-1
+    type: io.kestra.core.models.triggers.types.Flow
+    conditions:
+      - type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
+        namespace: demo.mailinblack
+        flowId: train_model
+      - type: io.kestra.core.models.conditions.types.ExecutionStatusCondition
+        in:
+          - SUCCESS

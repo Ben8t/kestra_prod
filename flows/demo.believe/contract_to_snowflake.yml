@@ -1,0 +1,58 @@
+id: contract_to_snowflake
+namespace: demo.believe.legal
+tasks:
+  - id: read_gsheet
+    type: io.kestra.plugin.googleworkspace.sheets.Read
+    description: Read data from Google Spreadsheet
+    serviceAccount: "{{ secret('gcp_creds') }}"
+    spreadsheetId: 1-genumpnubfmTLcRRzEZESSWcArccAC_3JsYrHiVMpQ
+    store: true
+    valueRender: FORMATTED_VALUE
+
+  - id: write_csv
+    type: io.kestra.plugin.serdes.csv.CsvWriter
+    description: Write CSV into Kestra internal storage
+    from: "{{ outputs.read_gsheet.uris.legal_contract }}"
+
+  - id: create_table
+    type: io.kestra.plugin.jdbc.snowflake.Query
+    sql: |
+      CREATE TABLE IF NOT EXISTS KESTRA_DEMO.LEGAL.CONTRACT (
+        artist STRING,
+        contract_last_date DATE,
+        contract_start_date DATE
+        );
+
+  - id: extract_internal_stage
+    type: io.kestra.plugin.jdbc.snowflake.Upload
+    from: "{{ outputs.write_csv.uri }}"
+    fileName: contract.csv
+    prefix: processed
+    stageName: "@kestra_demo.legal.%contract"
+    compress: true
+
+  - id: load_table
+    type: io.kestra.plugin.jdbc.snowflake.Query
+    sql: |
+      COPY INTO KESTRA_DEMO.LEGAL.CONTRACT
+      FROM @kestra_demo.legal.%contract
+      FILE_FORMAT = (type = csv field_optionally_enclosed_by='"' skip_header = 1)
+      PATTERN = '.*contract.csv.gz';
+
+triggers:
+  - id: schedule
+    type: io.kestra.core.models.triggers.types.Schedule
+    cron: "* 10 * * *"
+
+taskDefaults:
+  - type: io.kestra.plugin.jdbc.snowflake.Query
+    values:
+      url: jdbc:snowflake://tsldcqi-pf95942.snowflakecomputing.com?warehouse=COMPUTE_WH
+      username: "{{ secret('SNOWFLAKE_USER') }}"
+      password: "{{ secret('SNOWFLAKE_PASSWORD') }}"
+
+  - type: io.kestra.plugin.jdbc.snowflake.Upload
+    values:
+      url: jdbc:snowflake://tsldcqi-pf95942.snowflakecomputing.com?warehouse=COMPUTE_WH
+      username: "{{ secret('SNOWFLAKE_USER') }}"
+      password: "{{ secret('SNOWFLAKE_PASSWORD') }}"

@@ -1,0 +1,17 @@
+id: exercice_input_python
+namespace: training.exercice
+
+inputs:
+  - name: name
+    type: STRING
+
+tasks:
+
+  - id: log
+    type: io.kestra.core.tasks.log.Log
+    message: "{{ inputs.name }}"
+
+  - id: python
+    type: io.kestra.plugin.scripts.python.Script
+    script: |
+      print("Hello {{ inputs.name }}")

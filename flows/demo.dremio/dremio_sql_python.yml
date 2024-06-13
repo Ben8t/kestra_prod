@@ -1,0 +1,56 @@
+id: dremio_sql_python
+namespace: demo.dremio
+
+tasks:
+  - id: wdir
+    type: io.kestra.core.tasks.flows.WorkingDirectory
+    tasks:
+    - id: cloneRepository
+      type: io.kestra.plugin.git.Clone
+      url: https://github.com/dbt-labs/jaffle_shop
+      branch: main
+
+    - id: dbt
+      type: io.kestra.plugin.dbt.cli.DbtCLI
+      docker:
+        image: ghcr.io/kestra-io/dbt-dremio:latest
+      profiles: |
+        jaffle_shop:
+          outputs:
+            dev:
+              type: dremio
+              threads: 16
+              cloud_host: api.dremio.cloud
+              cloud_project_id: "{{ secret('DREMIO_PROJECT') }}"
+              user: "{{ secret('DREMIO_USER') }}"
+              pat: "{{ secret('DREMIO_PAT') }}"
+              use_ssl: true
+          target: dev
+      commands:
+        - dbt build
+
+  - id: query
+    type: io.kestra.plugin.jdbc.dremio.Query
+    disabled: false
+    url: "jdbc:dremio:direct=sql.dremio.cloud:443;ssl=true;PROJECT_ID={{ secret('DREMIO_PROJECT') }};"
+    username: $token
+    password: "{{ secret('DREMIO_PAT') }}"
+    sql: SELECT * FROM "@{{ secret('DREMIO_USER') }}"."stg_customers";
+    store: true
+
+  - id: to_csv
+    type: io.kestra.plugin.serdes.csv.CsvWriter
+    from: "{{ outputs.query.uri }}"
+
+  - id: python
+    type: io.kestra.plugin.scripts.python.Script
+    warningOnStdErr: false
+    docker:
+      image: ghcr.io/kestra-io/pydata:latest
+    inputFiles:
+      data.csv: "{{ outputs.to_csv.uri }}"
+    script: |
+      import pandas as pd
+      df = pd.read_csv("data.csv")
+
+      print(df.head())

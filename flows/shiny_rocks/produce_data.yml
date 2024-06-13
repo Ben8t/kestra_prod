@@ -4,32 +4,21 @@ description: |
   This flow generate Shiny Rocks fictional data. Three datasets are created: `orders`, `payments` and `services`.
   Like in reality, those data change everyday.
 
-disabled: true
-
 labels:
   tag: producer
 
 tasks:
-  - id: working_dir
-    type: io.kestra.core.tasks.flows.WorkingDirectory
-    tasks:
-
-      - id: clone
-        type: io.kestra.plugin.git.Clone
-        url: https://github.com/Ben8t/shiny_rocks
 
       - id: python
         type: io.kestra.plugin.scripts.python.Commands
+        namespaceFiles:
+          enabled: true
         warningOnStdErr: false
         beforeCommands:
-          - pip install -r dataset/produce/requirements.txt
+          - pip install -r scripts/produce/requirements.txt
         commands:
-          - python dataset/produce/main.py --date {{ schedule.date ?? now() | date("yyyy-MM-dd")}}
-
-      - id: file_outputs
-        type: io.kestra.core.tasks.storages.LocalFiles
-        description: This task allows to expose all CSV files created by the Python script task above to downstream tasks and flows.
-        outputs:
+          - python scripts/produce/produce_data.py --date {{ schedule.date ?? now() | date("yyyy-MM-dd")}}
+        outputFiles:
           - '*.csv'
 
       - id: run_date
@@ -38,9 +27,9 @@ tasks:
 
 
 triggers:
-  - id: schedule4
+  - id: schedule_produce_data
     type: io.kestra.core.models.triggers.types.Schedule
     cron: "0 10 * * *"
     backfill:
-      start: 2023-11-10T10:00:00Z
+      start: 2024-01-01T10:00:00Z
 

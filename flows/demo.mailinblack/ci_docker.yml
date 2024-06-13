@@ -1,0 +1,26 @@
+id: ci_docker
+namespace: demo.mailinblack
+
+tasks:
+
+  - id: docker_build_push
+    type: io.kestra.plugin.docker.Build
+    dockerfile: |
+      FROM ubuntu
+      ...
+    platforms:
+    - linux/amd64
+    tags:
+    - private-registry.io/dev_model:latest
+    labels:
+      unit-test: "true"
+    credentials:
+      registry: <registry.url.com>
+      username: <your-user>
+      password: <your-password>
+
+
+triggers:
+  - id: webhook
+    type: io.kestra.core.models.triggers.types.Webhook
+    key: "{{ secret('WEBHOOK_CI') }}"

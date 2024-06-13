@@ -1,0 +1,45 @@
+id: on_demand_cluster
+namespace: demo.databricks
+
+tasks:
+  - id: create_cluster
+    type: io.kestra.plugin.databricks.cluster.CreateCluster
+    authentication:
+      token: "{{ secret('DATABRICKS_TOKEN') }}"
+    host: "{{ secret('DATABRICKS_HOST') }}"
+    clusterName: kestra-demo
+    nodeTypeId: m5d.large
+    numWorkers: 1
+    sparkVersion: 13.0.x-scala2.12
+
+  - id: allow_failure
+    type: io.kestra.core.tasks.flows.AllowFailure
+    tasks:
+      - id: run_job
+        type: io.kestra.plugin.databricks.job.CreateJob
+        authentication:
+          token: "{{ secret('DATABRICKS_TOKEN') }}"
+        host: "{{ secret('DATABRICKS_HOST') }}"
+        jobTasks:
+          - existingClusterId: "{{outputs.create_cluster.clusterId}}"
+            taskKey: hello_task
+            sparkPythonTask:
+              pythonFile: /Shared/main.py
+              sparkPythonTaskSource: WORKSPACE
+        waitForCompletion: PT5M
+    
+  - id: delete_cluster
+    type: io.kestra.plugin.databricks.cluster.DeleteCluster
+    authentication:
+      token: "{{ secret('DATABRICKS_TOKEN') }}"
+    host: "{{ secret('DATABRICKS_HOST') }}"
+    clusterId: "{{outputs.create_cluster.clusterId}}"
+
+  - id: slack_notification
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK') }}"
+    payload: |
+      {
+        "channel": "U052JMPLBM3",
+        "text": "The cluster {{ outputs.create_cluster.clusterId }} has been deleted"
+      }
