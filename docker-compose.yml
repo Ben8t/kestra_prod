@@ -21,7 +21,7 @@ services:
       retries: 10
 
   kestra:
-    image: kestra/kestra:latest-full
+    image: kestra/kestra:develop-full
     entrypoint: /bin/bash
     user: "root"
     env_file:
@@ -33,6 +33,7 @@ services:
       - kestra-data:/app/storage
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/kestra-wd:/tmp/kestra-wd
+      - ./data:/meteo_data
       # - ./plugin/test/plugins:/app/plugins
     environment:
       KESTRA_CONFIGURATION: |
@@ -44,6 +45,7 @@ services:
             password: k3str4
         kestra:
           variables:
+            recursive-rendering: true
             globals:
                 my-var: hello
           repository:
@@ -59,6 +61,11 @@ services:
               enabled: true
               username: benoit@kestra.io
               password: kestra
+          plugins:
+            configurations:
+              - type: io.kestra.plugin.gcp
+                values:
+                  serviceAccount: "{{ secret('GCP_CREDS') }}"
           tasks:
             scripts:
               docker:
