@@ -8,11 +8,13 @@ jobs:
     runs-on: ubuntu-latest
     name: Kestra validate
     steps:
-      - name: Validate all flows on server-side
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: flow create all
         uses: kestra-io/validate-action@develop
         with:
           resource: flow
-          directory: ./kestra/test-flow
+          directory: ./test-flow
 
   # If validation passed, deploy resources
   deploy:
@@ -21,6 +23,8 @@ jobs:
     steps:
       # We can only deploy to one namespace at once,
       # so we have two different steps for our two namespaces product and engineering
+      - name: Checkout
+        uses: actions/checkout@v3
       - name: Deploy product flows
         uses: kestra-io/deploy-action@develop
         with:
