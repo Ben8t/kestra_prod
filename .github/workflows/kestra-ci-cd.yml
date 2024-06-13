@@ -6,7 +6,7 @@ jobs:
     name: Kestra validate
     steps:
       - name: Validate all flows on server-side
-        uses: actions/kestra-validate-action@develop
+        uses: actions/kestra-validate-action
         with:
           directory: ./test-flow
 
@@ -18,7 +18,7 @@ jobs:
       # We can only deploy to one namespace at once,
       # so we have two different steps for our two namespaces product and engineering
       - name: Deploy product flows
-        uses: actions/kestra-deploy-action@develop
+        uses: actions/kestra-deploy-action
         with:
           namespace: test
           directory: ./test-flow
