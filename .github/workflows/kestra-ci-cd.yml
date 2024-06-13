@@ -1,5 +1,8 @@
 name: Kestra CI/CD
-on: [push]
+on:
+  push:
+    branches:
+      - 'test/gha'
 jobs:
   validate:
     runs-on: ubuntu-latest
