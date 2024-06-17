@@ -58,7 +58,7 @@ services:
             type: postgres
           server:
             basic-auth:
-              enabled: true
+              enabled: false
               username: benoit@kestra.io
               password: kestra
           plugins:
